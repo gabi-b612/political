@@ -14,18 +14,18 @@ class MembreController extends Controller
     public function index(): View|Factory|Application
     {
         $membres = Membre::all();
-        return view('membres.index', compact('membres'));
+        return view('admin.membres.index', compact('membres'));
     }
 
     public function show($id): View|Factory|Application
     {
         $membre = Membre::findOrFail($id);
-        return view('membres.show', compact('membre'));
+        return view('admin.membres.show', compact('membre'));
     }
 
     public function create(): View|Factory|Application
     {
-        return view('membres.create');
+        return view('admin.membres.create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -68,7 +68,7 @@ class MembreController extends Controller
     public function edit($id): View|Factory|Application
     {
         $membre = Membre::findOrFail($id);
-        return view('membres.edit', compact('membre'));
+        return view('admin/membres.edit', compact('membre'));
     }
 
     public function update(Request $request, $id): RedirectResponse

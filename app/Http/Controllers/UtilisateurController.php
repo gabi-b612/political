@@ -15,18 +15,18 @@ class UtilisateurController extends Controller
     public function index(): View|Factory|Application
     {
         $utilisateurs = Utilisateur::all();
-        return view('utilisateurs.index', compact('utilisateurs'));
+        return view('admin.utilisateurs.index', compact('utilisateurs'));
     }
 
     public function show($id): View|Factory|Application
     {
         $utilisateur = Utilisateur::findOrFail($id);
-        return view('utilisateurs.show', compact('utilisateur'));
+        return view('admin.utilisateurs.show', compact('utilisateur'));
     }
 
     public function create(): View|Factory|Application
     {
-        return view('utilisateurs.create');
+        return view('admin.utilisateurs.create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -47,13 +47,13 @@ class UtilisateurController extends Controller
             'photo_de_profil' => $photoPath,
         ]);
 
-        return redirect()->route('utilisateurs.index')->with('success', 'Utilisateur créé avec succès.');
+        return redirect()->route('utilisateurs.index')->with('success', 'Utilisateur mis à jour avec succès.');
     }
 
     public function edit($id): View|Factory|Application
     {
         $utilisateur = Utilisateur::findOrFail($id);
-        return view('utilisateurs.edit', compact('utilisateur'));
+        return view('admin/utilisateurs.edit', compact('utilisateur'));
     }
 
     public function update(Request $request, $id): RedirectResponse

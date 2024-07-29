@@ -23,6 +23,6 @@ class Candidature extends Model
 
     public function offre_d_emploi(): BelongsTo
     {
-        return $this->belongsTo(Offre_d_emploi::class);
+        return $this->belongsTo(Offres_d_emplois::class);
     }
 }

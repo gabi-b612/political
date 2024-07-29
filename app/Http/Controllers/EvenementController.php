@@ -9,19 +9,14 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class EvenementController extends Controller
 {
     public function index(): View|Factory|Application
     {
-        $evenements = Evenement::with('photos')->get();
+        $evenements = Evenement::with('photos')->get(); // Charger les photos avec les événements
         return view('evenements.index', compact('evenements'));
-    }
-
-    public function show($id): View|Factory|Application
-    {
-        $evenement = Evenement::with('photos')->findOrFail($id);
-        return view('evenements.show', compact('evenement'));
     }
 
     public function create(): View|Factory|Application
@@ -34,15 +29,21 @@ class EvenementController extends Controller
         $request->validate([
             'titre' => 'required|string|max:255',
             'description' => 'required|string',
-            'date_de_l_evenement' => 'required|date',
-            'photos.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validation pour les photos
+            'date_debut' => 'required|date',
+            'date_fin' => 'required|date',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        $evenement = Evenement::create($request->only('titre', 'description', 'date_de_l_evenement'));
+        $evenement = Evenement::create([
+            'titre' => $request->input('titre'),
+            'description' => $request->input('description'),
+            'date_debut' => $request->input('date_debut'),
+            'date_fin' => $request->input('date_fin'),
+        ]);
 
         if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) {
-                $path = $photo->store('public/photos_evenements');
+            foreach ($request->file('photos') as $photoFile) {
+                $path = $photoFile->store('evenements', 'public');
                 PhotoEvenement::create([
                     'evenement_id' => $evenement->id,
                     'chemin' => $path,
@@ -51,6 +52,12 @@ class EvenementController extends Controller
         }
 
         return redirect()->route('evenements.index')->with('success', 'Événement créé avec succès.');
+    }
+
+    public function show($id): View|Factory|Application
+    {
+        $evenement = Evenement::with('photos')->findOrFail($id);
+        return view('evenements.show', compact('evenement'));
     }
 
     public function edit($id): View|Factory|Application
@@ -64,16 +71,22 @@ class EvenementController extends Controller
         $request->validate([
             'titre' => 'required|string|max:255',
             'description' => 'required|string',
-            'date_de_l_evenement' => 'required|date',
-            'photos.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'date_debut' => 'required|date',
+            'date_fin' => 'required|date',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         $evenement = Evenement::findOrFail($id);
-        $evenement->update($request->only('titre', 'description', 'date_de_l_evenement'));
+        $evenement->update([
+            'titre' => $request->input('titre'),
+            'description' => $request->input('description'),
+            'date_debut' => $request->input('date_debut'),
+            'date_fin' => $request->input('date_fin'),
+        ]);
 
         if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) {
-                $path = $photo->store('public/photos_evenements');
+            foreach ($request->file('photos') as $photoFile) {
+                $path = $photoFile->store('evenements', 'public');
                 PhotoEvenement::create([
                     'evenement_id' => $evenement->id,
                     'chemin' => $path,
@@ -87,8 +100,23 @@ class EvenementController extends Controller
     public function destroy($id): RedirectResponse
     {
         $evenement = Evenement::findOrFail($id);
-        $evenement->photos()->delete();
         $evenement->delete();
+        // Supprimer toutes les photos associées
+        $evenement->photos->each(function ($photo) {
+            Storage::disk('public')->delete($photo->chemin);
+            $photo->delete();
+        });
+
         return redirect()->route('evenements.index')->with('success', 'Événement supprimé avec succès.');
+    }
+
+    // Méthode pour supprimer une photo spécifique
+    public function destroyPhoto($id): RedirectResponse
+    {
+        $photo = PhotoEvenement::findOrFail($id);
+        Storage::disk('public')->delete($photo->chemin);
+        $photo->delete();
+
+        return redirect()->back()->with('success', 'Photo supprimée avec succès.');
     }
 }
